@@ -1,0 +1,61 @@
+﻿a:hover {
+    text-decoration: none;
+}
+
+.no-padding {
+    padding: 0px;
+}
+
+.profile-picture {
+    width: 100px;
+    height: 100px;
+    overflow: hidden;
+    -webkit-border-radius: 50%;
+    -moz-border-radius: 50%;
+    -ms-border-radius: 50%;
+    -o-border-radius: 50%;
+    border-radius: 50%;
+}
+
+.image-cropper {
+    display: inline;
+    width: auto;
+}
+
+.navbar-nav{
+    background-color: white;
+}
+
+/* The element to apply the animation to */
+@media (min-width: 1000px) {
+
+    .title-fadein {
+        opacity: initial;
+        animation-name: fade;
+        animation-duration: 2s;
+    }
+
+    .muted-fadein {
+        opacity: initial;
+        animation-name: fade;
+        animation-duration: 2s;
+    }
+
+    .links-fadein {
+        opacity: initial;
+        animation-name: fade;
+        animation-duration: 2s;
+    }
+}
+/* The animation code */
+@keyframes fade {
+    from {
+        margin-left: 100px;
+        opacity: 0;
+    }
+
+    to {
+        margin-left: 0px;
+        opacity: initial;
+    }
+}

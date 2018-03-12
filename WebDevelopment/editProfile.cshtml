@@ -1,0 +1,41 @@
+﻿@{
+
+}
+<!DOCTYPE html>
+<html class="h-100" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="~/custom.css" />
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <title>WebDevelopment</title>
+</head>
+<body class="h-100">
+    @RenderPage("~/Components/navbar.cshtml");
+
+    <div class="container">
+        <div class="image-cropper">
+            <div class="row justify-content-center">
+                <h1 class="display-3">Edit profile.</h1>
+            </div>
+
+            <div class="row justify-content-center">
+                <img class="profile-picture" src="~/Img/Mountains.jpg" alt="Your profile picture" />
+            </div>
+
+            <div class="container d-flex h-100 justify-content-center">
+                <form class="col-md-6" action="/" method="post">
+                    <div class="row form-group">
+                        <input class="form-control-file" type="file" name="new-profile-picture" id="InputName" placeholder="Modify profile picture" />
+                    </div>
+                    <div class="row form-group">
+                        <input class="form-control" type="text" name="username" id="InputName" placeholder="Modify name" />
+                    </div>
+                    <input class="btn btn-primary btn-block" type="submit" name="submit" value="submit">
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
