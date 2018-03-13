@@ -7,23 +7,18 @@
 }
 
 .profile-picture {
-    width: 100px;
-    height: 100px;
-    overflow: hidden;
-    -webkit-border-radius: 50%;
-    -moz-border-radius: 50%;
-    -ms-border-radius: 50%;
-    -o-border-radius: 50%;
-    border-radius: 50%;
-}
-
-.image-cropper {
     display: inline;
+    margin: 0 auto;
+    height: 100%;
     width: auto;
 }
 
-.navbar-nav{
-    background-color: white;
+.image-cropper {
+    width: 200px;
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 50%;
 }
 
 /* The element to apply the animation to */
@@ -58,4 +53,8 @@
         margin-left: 0px;
         opacity: initial;
     }
+}
+
+.validation-summary-errors > ul {
+    list-style-type: none;
 }

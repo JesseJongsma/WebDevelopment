@@ -1,0 +1,17 @@
+﻿@{
+
+    if (Session["LoggedIn"] == null)
+    {
+        Response.Redirect("~/login.cshtml");
+    }
+
+}
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    @RenderPage("~/Components/head.cshtml")
+    <title></title>
+</head>
+<body>
+    @RenderPage("~/Components/navbar.cshtml")
+</body>
+</html>

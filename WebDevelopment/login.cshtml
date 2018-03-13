@@ -1,43 +1,67 @@
 ﻿@using System.Security.Cryptography;
 @using System.Text;
+@using WebMatrix.Data;
 @{
+    Database db;
+    IEnumerable<dynamic> data = null;
+    string error = null;
+
     if (IsPost)
     {
+
         var SHAEncrypt = new SHAEncrypt();
 
         string username = Request.Form["username"];
         string password = Request.Form["password"];
 
         var encrypted = SHAEncrypt.GenerateSHA512String(password);
+        db = Database.Open("aSpecialDay");
+        data = db.Query("SELECT * FROM Login WHERE Username = @0 AND Password = @1", username, encrypted);
 
-        
+        if (data.Count() > 0)
+        {
+            Session["LoggedIn"] = true;
+        }
+        else
+        {
+            error = "Login failed.";
+        }
+    }
+
+    if (Session["LoggedIn"] != null && (bool)Session["LoggedIn"])
+    {
+        Response.Redirect("~/index.cshtml");
     }
 }
-    <!DOCTYPE html>
-    <html class="h-100" xmlns="http://www.w3.org/1999/xhtml">
-    <head>
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-        <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-        <title>Login - WebDevelopment</title>
-    </head>
-    <body class="h-100">
-        @RenderPage("~/Components/navbar.cshtml")
+<!DOCTYPE html>
+<html class="h-100" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    @RenderPage("~/Components/head.cshtml")
+    <title>Login - WebDevelopment</title>
+</head>
+<body class="h-100">
+    @RenderPage("~/Components/navbar.cshtml")
+    <div class="container d-flex h-100 justify-content-center">
+        <div class="row h-100 justify-content-center align-items-center">
+            <form class="col-md-12" action="" method="post">
+                @if (error != null)
+                {
+                <div class="alert alert-danger" role="alert">
+                    @error
+                </div>
+                    error = null;
+                }
 
-        <div class="container d-flex h-100 justify-content-center">
-            <div class="row h-100 justify-content-center align-items-center">
-                <form class="col-md-12" action="" method="post">
-                    <h1 class="display-12">Log in.</h1>
-                    <div class="form-group">
-                        <input class="form-control" type="text" name="username" id="InputUsername" placeholder="Username" />
-                    </div>
-                    <div class="form-group">
-                        <input class="form-control" type="password" name="password" id="InputPassword" placeholder="Password" />
-                    </div>
-                    <input class="btn btn-primary btn-block" type="submit" name="submit" value="submit">
-                </form>
-            </div>
+                <h1>Log in.</h1>
+                <div class="form-group">
+                    <input class="form-control" type="text" name="username" id="InputUsername" placeholder="Username" />
+                </div>
+                <div class="form-group">
+                    <input class="form-control" type="password" name="password" id="InputPassword" placeholder="Password" />
+                </div>
+                <input class="btn btn-primary btn-block" type="submit" name="submit" value="submit">
+            </form>
         </div>
-    </body>
+    </div>
+</body>
 </html>

@@ -1,0 +1,8 @@
+﻿@{
+    if (Session["LoggedIn"] != null)
+    {
+        Session.Clear();
+
+    }
+    Response.Redirect("~/index.cshtml");
+}

@@ -1,21 +1,35 @@
-﻿<nav class="navbar navbar-expand-md navbar-light bg-faded fixed-top">
+﻿@{ 
+    var pageName = Request.Url.PathAndQuery;
+}
+<nav class="navbar navbar-expand-md navbar-light fixed-top">
+    <a class="navbar-brand" href="~/index.cshtml">a Special Day.</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#MyNavbar" aria-controls="MyNavbar" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="MyNavbar">
         <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-            <li class="nav-item">
-                <a class="nav-link" href="~/index.cshtml">Home</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="~/login.cshtml">Login</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="~/register.cshtml">Register</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="~/editProfile">Profile</a>
-            </li>
+            @if (Session["LoggedIn"] == null)
+            {
+                <li class="nav-item">
+                    <a class="nav-link @(pageName == "/login.cshtml" ? "active" : "")" href="~/login.cshtml">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(pageName == "/register.cshtml" ? "active" : "")" href="~/register.cshtml">Register</a>
+                </li>
+            }
+
+            @if (Session["LoggedIn"] != null && (bool)Session["LoggedIn"])
+            {
+                <li class="nav-item">
+                    <a class="nav-link @(pageName == "/editProfile.cshtml" ? "active" : "")" href="~/editProfile.cshtml">Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(pageName == "/wishlists.cshtml" ? "active" : "")" href="~/wishlists.cshtml">Wishlists</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link @(pageName == "/logout.cshtml" ? "active" : "")" href="~/logout.cshtml">Logout</a>
+                </li>
+            }
         </ul>
     </div>
 </nav>

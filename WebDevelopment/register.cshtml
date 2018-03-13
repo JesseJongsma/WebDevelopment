@@ -13,20 +13,22 @@
     if (IsPost && Validation.IsValid())
     {
         var db = Database.Open("aSpecialDay");
+        var encrypted = SHAEncrypt.GenerateSHA512String(passwordFirst);
         var insertQuery = "INSERT INTO Login (Username, Password) " +
                     "VALUES (@0, @1)";
-        //var insert = db.Execute(insertQuery, username, encrypted);
+        db.Execute(insertQuery, username, encrypted);
+    }
 
+    if (Session["LoggedIn"] != null && (bool)Session["LoggedIn"])
+    {
+        Response.Redirect("~/index.cshtml");
     }
 
 }
 <!DOCTYPE html>
 <html class="h-100" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    @RenderPage("~/Components/head.cshtml")
     <title>Register - WebDevelopment</title>
 </head>
 <body class="h-100">
@@ -34,17 +36,16 @@
     <div class="container d-flex h-100 justify-content-center">
         <div class="row h-100 justify-content-center align-items-center">
             <form class="col-md-12" action="" method="post">
-                @if (IsPost)
+                @if (IsPost && !Validation.IsValid())
                 {
-                    <div class="alert alert-error">
-                        <button type="button" class="close" data-dismiss="alert">×</button>
-                        @Html.ValidationSummary()
+                    <div class="alert alert-danger">
+                        @Html.ValidationSummary("Errors:", false)
                     </div>
                 }
                 <h1 class="display-12">Sign up.</h1>
 
                 <div class="form-group">
-                    <input class="form-control" type="text" name="username" placeholder="Enter your Username" />
+                    <input class="form-control" type="text" name="username" placeholder="Enter your Username" required />
                 </div>
                 <div class="form-group">
                     <input class="form-control" type="text" name="name" id="InputName" placeholder="Enter your name" required />
