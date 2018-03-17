@@ -1,0 +1,75 @@
+﻿@using WebMatrix.Data;
+@{
+    if (Session["LoggedIn"] == null)
+    {
+        Response.Redirect("~/login.cshtml");
+    }
+
+    Validation.RequireField("name", "Username is required.");
+    Validation.RequireField("date", "Date is required");
+    Validation.RequireField("time", "Time is required");
+    Validation.RequireField("location", "location is required");
+
+    string name = Request.Form["name"];
+    string date = Request.Form["date"];
+    string time = Request.Form["time"];
+    string description = Request.Form["description"];
+    string location = Request.Form["location"];
+
+    string dateTime = date +" "+ time;
+
+    if (IsPost && Validation.IsValid())
+    {
+        SHAEncrypt encrypt = new SHAEncrypt();
+        string key = encrypt.RandomKey();
+
+        Database db = Database.Open("aSpecialDay");
+        var selectCurrentUser = db.QueryValue("SELECT id FROM Login WHERE Username = @0", Session["Username"]);
+
+        var insertToEvents = db.Execute("INSERT INTO Events (Name, DateTime, Description, Location, SecretKey) " +
+            "VALUES (@0, @1, @2, @3, @4)", name, dateTime, description, location, key);
+
+        var selectLastAddedRow = db.QueryValue("SELECT TOP 1 Id FROM Events ORDER BY Id DESC");
+
+        var insertToGuests = db.Execute("INSERT INTO Guests (UserId, EventId, Host) VALUES (@0, @1, @2)", selectCurrentUser, selectLastAddedRow, 1);
+
+    }
+}
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    @RenderPage("~/Components/head.cshtml")
+</head>
+<body>
+    @RenderPage("~/Components/navbar.cshtml")
+    <div class="container d-flex h-100 justify-content-center">
+        <div class="row h-100 justify-content-center align-items-center">
+            <form class="col-md-12" action="" method="post">
+                @if (IsPost && !Validation.IsValid())
+                {
+                    <div class="alert alert-danger">
+                        @Html.ValidationSummary("Errors:", false)
+                    </div>
+                }
+                <h1>Create Event.</h1>
+
+                <div class="form-group">
+                    <input class="form-control" type="text" name="name" placeholder="Enter your event name." required />
+                </div>
+                <div class="form-group">
+                    <input class="form-control col" type="date" name="date" placeholder="Enter the date of the event." required />
+                </div>
+                <div class="form-group">
+                    <input class="form-control col" type="time" name="time" placeholder="Enter the time of the event." required />
+                </div>
+                <div class="form-group">
+                    <textarea class="form-control" name="description" placeholder="Enter a description of your event."></textarea>
+                </div>
+                <div class="form-group">
+                    <input class="form-control" type="text" name="location" placeholder="Enter the location of your event" required />
+                </div>
+                <input class="btn btn-primary btn-block" type="submit" name="submit" value="submit">
+            </form>
+        </div>
+    </div>
+</body>
+</html>

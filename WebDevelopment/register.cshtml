@@ -16,7 +16,17 @@
         var encrypted = SHAEncrypt.GenerateSHA512String(passwordFirst);
         var insertQuery = "INSERT INTO Login (Username, Password) " +
                     "VALUES (@0, @1)";
-        db.Execute(insertQuery, username, encrypted);
+        var selectQuery = db.QueryValue("SELECT Username FROM Login WHERE Username  = @0", username);
+
+        if (selectQuery != null)
+        {
+            Validation.Add("username", Validator.EqualsTo(selectQuery, "Username already exists."));
+        }
+        else
+        {
+            db.Execute(insertQuery, username, encrypted);
+            Response.Redirect("~/index.cshtml");
+        }
     }
 
     if (Session["LoggedIn"] != null && (bool)Session["LoggedIn"])
@@ -29,7 +39,6 @@
 <html class="h-100" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     @RenderPage("~/Components/head.cshtml")
-    <title>Register - WebDevelopment</title>
 </head>
 <body class="h-100">
     @RenderPage("~/Components/navbar.cshtml")
@@ -37,11 +46,11 @@
         <div class="row h-100 justify-content-center align-items-center">
             <form class="col-md-12" action="" method="post">
                 @if (IsPost && !Validation.IsValid())
-                {
-                    <div class="alert alert-danger">
-                        @Html.ValidationSummary("Errors:", false)
-                    </div>
-                }
+        {
+            <div class="alert alert-danger">
+                @Html.ValidationSummary("Errors:", false)
+            </div>
+}
                 <h1 class="display-12">Sign up.</h1>
 
                 <div class="form-group">

@@ -1,0 +1,104 @@
+﻿@using WebMatrix.Data;
+@{
+
+    if (Session["LoggedIn"] == null)
+    {
+        Response.Redirect("~/login.cshtml");
+    }
+
+    int userId = 0;
+    int wishlistId = 0;
+    int eventId = 0;
+    string name = null;
+    string description = null;
+    string link = null;
+
+    string nameInput = null;
+    string descriptionInput = null;
+    string linkInput = null;
+
+    bool selectHost = false;
+
+    wishlistId = Convert.ToInt32(Request.Params["wishlistId"]);
+    eventId = Convert.ToInt32(Request.Params["EventId"]);
+    name = Request.Params["NameRow"];
+    description = Request.Params["DescriptionRow"];
+    link = Request.Params["LinkRow"];
+
+    Validation.RequireField("name", "Name is a required field.");
+
+    if (IsPost && Validation.IsValid() && Request.Form["update"] != null)
+    {
+        nameInput = Request.Form["name"];
+        descriptionInput = Request.Form["description"];
+        linkInput = Request.Form["link"];
+
+        CreateWishlist CW = new CreateWishlist(eventId, Session["Username"].ToString());
+        userId = CW.GetUserId();
+        Database db = Database.Open("aSpecialDay");
+        selectHost = db.QueryValue("SELECT Host FROM Guests WHERE UserId = @0 AND EventId = @1 AND Host = 1", userId, eventId);
+
+        if (selectHost)
+        {
+            db.Execute("UPDATE Wishlists SET Name = @0, Description = @1, Link = @2 WHERE Id = @3", nameInput, descriptionInput, linkInput, wishlistId);
+            Response.Redirect("~/createWishlist.cshtml?EventId=" + eventId);
+        }
+        db.Close();
+    }
+
+    if (IsPost && Validation.IsValid() && Request.Form["remove"] != null)
+    {
+        CreateWishlist CW = new CreateWishlist(eventId, Session["Username"].ToString());
+        userId = CW.GetUserId();
+        Database db = Database.Open("aSpecialDay");
+        selectHost = db.QueryValue("SELECT Host FROM Guests WHERE UserId = @0 AND EventId = @1 AND Host = 1", userId, eventId);
+
+        if (selectHost)
+        {
+            db.Execute("DELETE FROM Wishlists WHERE Id = @0", wishlistId);
+            Response.Redirect("~/createWishlist.cshtml?EventId=" + eventId);
+        }
+    }
+}
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    @RenderPage("~/Components/head.cshtml")
+</head>
+<body>
+    @RenderPage("~/Components/navbar.cshtml")
+    <div class="container d-flex h-100 justify-content-center">
+        <div class="row h-100 justify-content-center align-items-center">
+            <form class="col-md-12" action="" method="post">
+                @if (IsPost && !Validation.IsValid())
+                {
+                    <div class="alert alert-danger">
+                        @Html.ValidationSummary("Errors:", false)
+                    </div>
+                }
+                <h1>Update item.</h1>
+
+                <div class="form-group">
+                    <input class="form-control" type="text" name="name" placeholder="Modify the name of the item." value="@name" required />
+                </div>
+                <div class="form-group">
+                    <textarea class="form-control" name="description" placeholder="Modify the description of your item. (Optional)">@description</textarea>
+                </div>
+                <div class="form-group">
+                    <input class="form-control col" type="text" name="link" placeholder="Modify the link to your item. (Optional)" value="@link" />
+                </div>
+                <input class="btn btn-primary btn-block" type="submit" name="update" value="Update Row">
+                <input class="btn btn-danger btn-block" id="remove" name="remove" value="Remove Row">
+            </form>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $("#remove").click(function () {
+            $("#remove").val("Are you sure?");
+
+            $("#remove").click(function () {
+                $("#remove").attr("type", "submit");
+            });
+        });
+    </script>
+</body>
+</html>

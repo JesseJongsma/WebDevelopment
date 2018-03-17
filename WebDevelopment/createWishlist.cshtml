@@ -1,0 +1,129 @@
+﻿@{
+    if (Session["LoggedIn"] == null)
+    {
+        Response.Redirect("~/login.cshtml");
+    }
+
+    CreateWishlist createWishlist = null;
+    IEnumerable<dynamic> wishlist = null;
+    bool checkEvent = false;
+    bool host = false;
+    string title = null;
+    int count = 0;
+
+
+    if (!int.TryParse(Request.Params["EventId"], out int eventId))
+    {
+        Validation.AddFormError("Please do not interfere with the request.");
+    }
+    else
+    {
+        createWishlist = new CreateWishlist(eventId, Session["Username"].ToString());
+    }
+
+    Validation.RequireFields("name", "description");
+
+    if (IsPost && Validation.IsValid())
+    {
+        string name = Request.Form["name"];
+        string description = Request.Form["description"];
+        string link = Request.Form["link"];
+        createWishlist.InsertData(name, description, link);
+    }
+
+    if (createWishlist != null)
+    {
+        checkEvent = createWishlist.CheckEventForUser();
+    }
+
+    if (checkEvent)
+    {
+        title = createWishlist.GetTitle();
+        host = createWishlist.GetHost();
+        wishlist = createWishlist.GetWishlist();
+    }
+}
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    @RenderPage("~/Components/head.cshtml")
+</head>
+<body>
+    @RenderPage("~/Components/navbar.cshtml")
+
+    <div class="container">
+        @if (IsPost && !Validation.IsValid())
+        {
+            <div class="container">
+                <div class="alert alert-danger">
+                    @Html.ValidationSummary("Errors:", false)
+                </div>
+            </div>
+        }
+        <h1>@title.</h1>
+        <table class="table table-hover">
+            @if (wishlist != null)
+            {
+                <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Description</th>
+                        <th scope="col">Link</th>
+                        @if (host)
+                        {
+                            <th name="RemoveCol" scope="col">Edit</th>
+                        }
+                        else
+                        {
+                            <th name="BuyCol" scope="col">Buy</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+
+                    @foreach (var row in wishlist)
+                    {
+                        <tr>
+                            <td name="Name">@row.Name</td>
+                            <td name="Description">@row.Description</td>
+                            <td name="Link">@row.Link</td>
+
+                            @if (host)
+                            {
+                                <td>
+                                    <form action="~/EditItem.cshtml" method="get">
+                                        <input name="wishlistId" type="hidden" value="@row.Id">
+                                        <input name="eventId" type="hidden" value="@row.EventId">
+                                        <input name="NameRow" type="hidden" value="@row.Name">
+                                        <input name="DescriptionRow" type="hidden"  value="@row.Description">
+                                        <input name="LinkRow" type="hidden" value="@row.Link">
+                                        <input name="EditBtn" type="submit" class="btn btn-light" value="Edit">
+                                    </form>
+                                </td>
+                            }
+                            else
+                            {
+                                <td><a name="BuyBtn" class="btn btn-primary" href="">Buy</a></td>
+                            }
+
+                        </tr>
+                        count++;
+                    }
+
+                    @if (Request.Params["EventId"] != null && createWishlist.CheckEventForUser())
+                    {
+                        <tr>
+                            <form action="" method="post">
+                                <td><input class="form-control" type="text" name="name" placeholder="Enter the name of the gift" /></td>
+                                <td><input class="form-control" type="text" name="description" placeholder="Enter the description of the gift" /></td>
+                                <td><input class="form-control" type="text" name="link" placeholder="Enter the link of the gift" /></td>
+                                <td><input class="btn btn-light" type="submit" value="Add" /></td>
+                            </form>
+                        </tr>
+                    }
+                </tbody>
+            }
+        </table>
+    </div>
+</body>
+</html>

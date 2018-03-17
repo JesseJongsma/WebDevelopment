@@ -1,6 +1,7 @@
 ﻿@{ 
     var pageName = Request.Url.PathAndQuery;
 }
+
 <nav class="navbar navbar-expand-md navbar-light fixed-top">
     <a class="navbar-brand" href="~/index.cshtml">a Special Day.</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#MyNavbar" aria-controls="MyNavbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -24,7 +25,7 @@
                     <a class="nav-link @(pageName == "/editProfile.cshtml" ? "active" : "")" href="~/editProfile.cshtml">Profile</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @(pageName == "/wishlists.cshtml" ? "active" : "")" href="~/wishlists.cshtml">Wishlists</a>
+                    <a class="nav-link @(pageName == "/events.cshtml" ? "active" : "")" href="~/events.cshtml">Events</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @(pageName == "/logout.cshtml" ? "active" : "")" href="~/logout.cshtml">Logout</a>

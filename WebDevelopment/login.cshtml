@@ -2,9 +2,15 @@
 @using System.Text;
 @using WebMatrix.Data;
 @{
-    Database db;
+    Database db = Database.Open("aSpecialDay");
     IEnumerable<dynamic> data = null;
     string error = null;
+    string keyCookieValue = null;
+    if (Request.Cookies["key"] != null)
+    {
+        HttpCookie keyCookie = Request.Cookies["key"];
+        keyCookieValue = keyCookie.Value;
+    }
 
     if (IsPost)
     {
@@ -13,14 +19,14 @@
 
         string username = Request.Form["username"];
         string password = Request.Form["password"];
-
         var encrypted = SHAEncrypt.GenerateSHA512String(password);
-        db = Database.Open("aSpecialDay");
+
         data = db.Query("SELECT * FROM Login WHERE Username = @0 AND Password = @1", username, encrypted);
 
         if (data.Count() > 0)
         {
             Session["LoggedIn"] = true;
+            Session["Username"] = username;
         }
         else
         {
@@ -30,25 +36,34 @@
 
     if (Session["LoggedIn"] != null && (bool)Session["LoggedIn"])
     {
+        if (keyCookieValue != null)
+        {
+            CreateWishlist wishlist = new CreateWishlist(0, Session["Username"].ToString());
+            int userId = wishlist.GetUserId();
+            int eventId = db.QueryValue("SELECT Id FROM Events WHERE SecretKey = @0", keyCookieValue);
+            db.Execute("INSERT INTO Guests (UserId, EventId, Host) VALUES (@0, @1, @2)", userId, eventId, 0);
+        }
         Response.Redirect("~/index.cshtml");
     }
+
+    db.Close();
 }
 <!DOCTYPE html>
 <html class="h-100" xmlns="http://www.w3.org/1999/xhtml">
 <head>
     @RenderPage("~/Components/head.cshtml")
-    <title>Login - WebDevelopment</title>
 </head>
 <body class="h-100">
     @RenderPage("~/Components/navbar.cshtml")
+    <h1>@keyCookieValue</h1>
     <div class="container d-flex h-100 justify-content-center">
         <div class="row h-100 justify-content-center align-items-center">
             <form class="col-md-12" action="" method="post">
                 @if (error != null)
                 {
-                <div class="alert alert-danger" role="alert">
-                    @error
-                </div>
+                    <div class="alert alert-danger" role="alert">
+                        @error
+                    </div>
                     error = null;
                 }
 

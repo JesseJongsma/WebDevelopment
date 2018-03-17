@@ -1,0 +1,24 @@
+﻿@using WebMatrix.Data;
+@{
+    // Remove cookie
+    if(Response.Cookies["key"] != null)
+    {
+        HttpCookie keyRemove = HttpContext.Current.Request.Cookies["key"];
+        HttpContext.Current.Response.Cookies.Remove("key");
+        keyRemove.Expires = DateTime.Now.AddDays(-10);
+        keyRemove.Value = null;
+        HttpContext.Current.Response.SetCookie(keyRemove);
+    }
+
+    // Create cookie
+    if (Request.Params["Key"] != null)
+    {
+        string key = Request.Params["Key"];
+        HttpCookie cookieKey = new HttpCookie("key");
+        cookieKey.Value = key;
+        cookieKey.Expires.Add(new TimeSpan(1, 0, 0));
+        Response.Cookies.Add(cookieKey);
+    }
+
+    Response.Redirect("~/login.cshtml");
+}

@@ -1,4 +1,8 @@
-﻿a:hover {
+﻿body {
+    padding-top: 65px;
+}
+
+a:hover {
     text-decoration: none;
 }
 
@@ -7,7 +11,6 @@
 }
 
 .profile-picture {
-    display: inline;
     margin: 0 auto;
     height: 100%;
     width: auto;

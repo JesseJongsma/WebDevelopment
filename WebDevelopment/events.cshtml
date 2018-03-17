@@ -1,0 +1,113 @@
+﻿@using WebMatrix.Data;
+@{
+
+    if (Session["LoggedIn"] == null)
+    {
+        Response.Redirect("~/login.cshtml");
+    }
+
+    Database db = Database.Open("aSpecialDay");
+    var selectWishlists = db.Query("SELECT * FROM Wishlists");
+
+    var selectLoginId = db.QueryValue("SELECT Id FROM Login WHERE Username = @0", Session["Username"]);
+    var selectEvents = db.Query("SELECT * " +
+        "FROM Guests " +
+        "FULL OUTER JOIN Events ON Events.Id = Guests.EventId " +
+        "WHERE UserId = @0", selectLoginId);
+
+
+    string url = new Uri(HttpContext.Current.Request.Url.AbsoluteUri).OriginalString;
+
+    //string url = Request.Url.ToString();
+    string formattedUrl = null;
+    try
+    {
+        formattedUrl = url.Substring(0, url.LastIndexOf("/"));
+    }
+    catch
+    {
+        formattedUrl = url;
+    }
+    formattedUrl += "/invite.cshtml?Key=";
+    db.Close();
+}
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    @RenderPage("~/Components/head.cshtml")
+</head>
+<body>
+    @RenderPage("~/Components/navbar.cshtml")
+    <div class="container">
+        <h1>Your events.</h1>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Date Time</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Location</th>
+                    <th scope="col">Share link</th>
+                    <th scope="col">Add / Edit Wishlist</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @{
+                    foreach (var row in selectEvents)
+                    {
+                        if (row.Host)
+                        {
+                            <tr>
+                                <td>@row.Name</td>
+                                <td>@row.DateTime</td>
+                                <td>@row.Description</td>
+                                <td>@row.Location</td>
+                                <td><input class="form-control" value="@formattedUrl@row.SecretKey" readonly /></td>
+                                <td><a class="btn btn-light" href="~/createWishlist.cshtml?EventId=@row.Id">Add / Edit Wishlist</a></td>
+                            </tr>
+                        }
+                    }
+
+                    <tr>
+                        <td><a href="createEvent.cshtml">Click here to create an event.</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <h1>Events You are invited to.</h1>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Date Time</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Location</th>
+                    <th scope="col">View Wishlist</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @{
+                    foreach (var row in selectEvents)
+                    {
+                        if (!row.Host)
+                        {
+                            <tr>
+                                <td>@row.Name</td>
+                                <td>@row.DateTime</td>
+                                <td>@row.Description</td>
+                                <td>@row.Location</td>
+                                <td><a class="btn btn-light" href="~/createWishlist.cshtml?EventId=@row.Id">View Wishlist</a></td>
+                            </tr>
+                        }
+                    }
+
+                    <tr>
+                        <td><a href="createEvent.cshtml">Click here to create an event.</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
