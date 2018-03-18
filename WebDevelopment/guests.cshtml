@@ -1,0 +1,81 @@
+﻿@using WebMatrix.Data;
+@{
+    if (Session["LoggedIn"] == null)
+    {
+        Response.Redirect("~/login.cshtml");
+    }
+
+    dynamic result = null;
+    string modify = null;
+    string userId = null;
+    int eventIdGet;
+
+    if (Request.Params["EventId"] != null)
+    {
+        if (int.TryParse(Request.Params["EventId"], out eventIdGet))
+        {
+            if (IsPost && Request.Form["Modify"] != null)
+            {
+                CreateWishlist CW = new CreateWishlist(0, Session["Username"].ToString());
+                modify = Request.Form["Modify"];
+                userId = Request.Form["UserId"];
+
+                using (Database db = Database.Open("aSpecialDay"))
+                {
+                    bool host = db.QueryValue("SELECT Host FROM Guests WHERE UserId = @0 AND EventId = @1", userId, eventIdGet);
+                    int lastHost = db.QueryValue("SELECT COUNT(*) AS 'count' FROM Guests WHERE EventId = @0 AND Host = 1", eventIdGet);
+
+                    if (lastHost > 1 || !host)
+                    {
+                        db.Execute("UPDATE Guests SET Host = @0 WHERE UserId = @1 AND EventId = @2", !host, userId, eventIdGet);
+                    }
+                }
+            }
+
+            using (Database db = Database.Open("aSpecialDay"))
+            {
+                result = db.Query("SELECT * " +
+                    "FROM Guests " +
+                    "JOIN Login ON Login.Id = Guests.UserId " +
+                    "WHERE Guests.EventId = @0", eventIdGet);
+            }
+        }
+    }
+}
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    @RenderPage("~/Components/head.cshtml")
+</head>
+<body>
+    @RenderPage("~/Components/navbar.cshtml")
+    <div class="container">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Username</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Modify Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (result != null)
+                {
+                    foreach (var row in result)
+                    {
+                        <tr>
+                            <td>@row.Username</td>
+                            <td>@( @row.Host ? "Host" : "Guest" )</td>
+                            <td>
+                                <form action="" method="post">
+                                    <input type="hidden" name="UserId" value="@row.UserId" />
+                                    <input type="submit" class="btn button-light" name="Modify" value="@( @row.Host ? "Make guest" : " Make host" )" />
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

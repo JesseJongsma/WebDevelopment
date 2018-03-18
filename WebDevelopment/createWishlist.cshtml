@@ -10,6 +10,7 @@
     bool host = false;
     string title = null;
     int count = 0;
+    int userId = 0;
 
 
     if (!int.TryParse(Request.Params["EventId"], out int eventId))
@@ -42,6 +43,11 @@
         host = createWishlist.GetHost();
         wishlist = createWishlist.GetWishlist();
     }
+
+    if (host)
+    {
+        userId = createWishlist.GetUserId();
+    }
 }
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -60,7 +66,7 @@
                 </div>
             </div>
         }
-        <h1>@title.</h1>
+        <h1>@title</h1>
         <table class="table table-hover">
             @if (wishlist != null)
             {
@@ -86,16 +92,16 @@
                         <tr>
                             <td name="Name">@row.Name</td>
                             <td name="Description">@row.Description</td>
-                            <td name="Link">@row.Link</td>
+                            <td name="Link"><a href="@row.link">@row.Link</a></td>
 
                             @if (host)
                             {
                                 <td>
-                                    <form action="~/EditItem.cshtml" method="get">
+                                    <form action="~/editItem.cshtml" method="get">
                                         <input name="wishlistId" type="hidden" value="@row.Id">
                                         <input name="eventId" type="hidden" value="@row.EventId">
                                         <input name="NameRow" type="hidden" value="@row.Name">
-                                        <input name="DescriptionRow" type="hidden"  value="@row.Description">
+                                        <input name="DescriptionRow" type="hidden" value="@row.Description">
                                         <input name="LinkRow" type="hidden" value="@row.Link">
                                         <input name="EditBtn" type="submit" class="btn btn-light" value="Edit">
                                     </form>
@@ -103,7 +109,21 @@
                             }
                             else
                             {
-                                <td><a name="BuyBtn" class="btn btn-primary" href="">Buy</a></td>
+                                <td>
+                                    <form action="/boughtItems.cshtml" method="post">
+                                        <input type="hidden" name="EventId" value="@row.EventId" />
+                                        <input type="hidden" name="UserId" value="@userId" />
+                                        <input type="hidden" name="WishlistId" value="@row.Id" />
+                                        @if (createWishlist.CheckBought(row.Id))
+                                        {
+                                            <input class="btn btn-block btn-primary disabled" value="Bought" />
+                                        }
+                                        else
+                                        {
+                                            <input type="submit" name="BuyBtn" class="btn btn-block btn-primary" value="Buy" />
+                                        }
+                                    </form>
+                                </td>
                             }
 
                         </tr>

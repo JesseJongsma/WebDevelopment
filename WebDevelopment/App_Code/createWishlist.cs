@@ -29,7 +29,6 @@ public class CreateWishlist
                 db.Execute("INSERT INTO Wishlists (EventId, Name, Description, Link) " +
                     "VALUES (@0, @1, @2, @3)", _EventId, name, description, link);
             }
-
         }
     }
 
@@ -43,6 +42,12 @@ public class CreateWishlist
         return UserId;
     }
 
+    /// <summary>
+    /// This method checks if the user is authorised to modify an event.
+    /// </summary>
+    /// <returns>
+    /// Returns true if the user is host or guest to an event.
+    /// </returns>
     public bool CheckEventForUser()
     {
         dynamic result = null;
@@ -66,8 +71,8 @@ public class CreateWishlist
         {
             selectTitle = db.QueryValue("SELECT Name FROM Events WHERE Id = @0", _EventId);
         }
-            return selectTitle.ToString();
-        }
+        return selectTitle.ToString();
+    }
 
     public bool GetHost()
     {
@@ -87,5 +92,20 @@ public class CreateWishlist
             result = db.Query("SELECT * FROM Wishlists WHERE EventId = @0", _EventId);
         }
         return result;
+    }
+
+    public bool CheckBought(int wishlistId)
+    {
+        dynamic result;
+        using (db)
+        {
+            result = db.Query("SELECT * FROM Bought WHERE WishlistId = @0", wishlistId);
+        }
+
+        if (result.Count > 0)
+        {
+            return true;
+        }
+        return false;
     }
 }

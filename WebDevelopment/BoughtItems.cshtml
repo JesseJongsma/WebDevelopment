@@ -1,0 +1,118 @@
+﻿@using WebMatrix.Data;
+@{
+    if (Session["LoggedIn"] == null)
+    {
+        Response.Redirect("~/login.cshtml");
+    }
+
+    string eventId, userId, wishlistId;
+    dynamic joinBoughtWishlists = null;
+    CreateWishlist CW;
+    int count = 0;
+
+    if (IsPost && Validation.IsValid() && Request.Form["BuyBtn"] != null)
+    {
+        eventId = Request.Form["EventId"];
+        userId = Request.Form["UserId"];
+        wishlistId = Request.Form["WishlistId"];
+
+        CW = new CreateWishlist(Convert.ToInt32(eventId), Session["Username"].ToString());
+        if (CW.CheckEventForUser())
+        {
+            using (Database db = Database.Open("aSpecialDay"))
+            {
+                var selectDuplicate = db.Query("SELECT * FROM Bought " +
+                    "WHERE LoginId = @0 AND WishlistId = @1", CW.GetUserId(), wishlistId);
+
+                if (selectDuplicate.Count() == 0)
+                {
+                    db.Execute("INSERT INTO Bought (LoginId, WishlistId) " +
+                        "VALUES (@0, @1) ", CW.GetUserId(), Convert.ToInt32(wishlistId));
+                }
+            }
+        }
+    }
+
+    if (IsPost && Validation.IsValid() && Request.Form["Remove"] != null)
+    {
+        CW = new CreateWishlist(0, Session["Username"].ToString());
+        userId = CW.GetUserId().ToString();
+        wishlistId = Request.Form["WishlistId"];
+        using (Database db = Database.Open("aSpecialDay"))
+        {
+            var selectBought = db.Query("SELECT WishlistId FROM Bought WHERE LoginId = @0", userId);
+            if (selectBought != null)
+            {
+                db.Execute("DELETE FROM Bought WHERE LoginId = @0 AND WishlistId = @1", userId, wishlistId);
+            }
+        }
+    }
+
+    using (Database db = Database.Open("aSpecialDay"))
+    {
+        CW = new CreateWishlist(0, Session["Username"].ToString());
+        var selectBought = db.Query("SELECT WishlistId FROM Bought WHERE LoginId = @0", CW.GetUserId());
+        joinBoughtWishlists = db.Query("" +
+            "SELECT Bought.WishlistId, Wishlists.EventId, Wishlists.Name, Wishlists.Description, Wishlists.Link, Events.Name AS 'eventName' " +
+            "FROM Bought " +
+            "INNER JOIN Wishlists " +
+            "ON Bought.WishlistId = Wishlists.Id " +
+            "INNER JOIN Events " +
+            "ON Wishlists.EventId = Events.Id");
+    }
+}
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    @RenderPage("~/Components/head.cshtml")
+</head>
+<body>
+    @RenderPage("~/Components/navbar.cshtml")
+    <div class="container">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Event name</th>
+                    <th scope="col">Gift name</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Link</th>
+                    <th scope="col">I don't want to buy this gift anymore.</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (joinBoughtWishlists != null)
+                {
+                    foreach (var row in joinBoughtWishlists)
+                    {
+                        <tr>
+                            <td>@row.EventName</td>
+                            <td>@row.Name</td>
+                            <td>@row.Description</td>
+                            <td>@row.Link</td>
+                            <td>
+                                <form action="" method="post">
+                                    <input type="hidden" name="WishlistId" value="@row.WishlistId" />
+                                    <input name="Remove" class="btn btn-danger btn-block" value="Remove" onclick="validate(@count)" />
+                                </form>
+                            </td>
+                        </tr>
+                        count++;
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <script type="text/javascript">
+        function validate(index)
+        {
+            var removeBtn = document.getElementsByName("Remove")[index];
+            if (removeBtn.value == "Are you sure?") {
+                removeBtn.setAttribute("type", "submit");
+            }
+            if (removeBtn.value == "Remove") {
+                removeBtn.value = "Are you sure?";
+            }
+        }
+    </script>
+</body>
+</html>

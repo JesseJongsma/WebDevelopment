@@ -37,7 +37,7 @@
 </head>
 <body>
     @RenderPage("~/Components/navbar.cshtml")
-    <div class="container">
+    <div class="container-fluid">
         <h1>Your events.</h1>
         <table class="table table-hover">
             <thead>
@@ -47,14 +47,18 @@
                     <th scope="col">Description</th>
                     <th scope="col">Location</th>
                     <th scope="col">Share link</th>
+                    <th scope="col">Guests</th>
                     <th scope="col">Add / Edit Wishlist</th>
+                    <th scope="col">Modify Event</th>
                 </tr>
             </thead>
             <tbody>
 
                 @{
+                    int count = -1;
                     foreach (var row in selectEvents)
                     {
+
                         if (row.Host)
                         {
                             <tr>
@@ -62,10 +66,16 @@
                                 <td>@row.DateTime</td>
                                 <td>@row.Description</td>
                                 <td>@row.Location</td>
-                                <td><input class="form-control" value="@formattedUrl@row.SecretKey" readonly /></td>
+                                <td>
+                                    <input type="hidden" name="key" class="form-control" value="@formattedUrl@row.SecretKey" />
+                                    <button name="copy" class="btn btn-light" onclick="copy(@count)">Copy</button>
+                                </td>
+                                <td><a class="btn btn-light" href="~/guests.cshtml?EventId=@row.Id">View Guests</a></td>
                                 <td><a class="btn btn-light" href="~/createWishlist.cshtml?EventId=@row.Id">Add / Edit Wishlist</a></td>
+                                <td><a class="btn btn-light" href="~/modifyEvent.cshtml?EventId=@row.Id">Modify this event</a></td>
                             </tr>
                         }
+                        count++;
                     }
 
                     <tr>
@@ -74,7 +84,7 @@
                 }
             </tbody>
         </table>
-        <h1>Events You are invited to.</h1>
+        <h1>Events you are invited to.</h1>
         <table class="table table-hover">
             <thead>
                 <tr>
@@ -101,13 +111,24 @@
                             </tr>
                         }
                     }
-
-                    <tr>
-                        <td><a href="createEvent.cshtml">Click here to create an event.</a></td>
-                    </tr>
                 }
             </tbody>
         </table>
     </div>
+    <script type="text/javascript">
+        function copy(index) {
+
+            var hiddenText = document.getElementsByName("key")[index];
+            var copyBtn = document.getElementsByName("copy")[index];
+
+            if (hiddenText.type == "hidden") {
+                hiddenText.type = "text";
+                hiddenText.select();
+                document.execCommand("Copy");
+                hiddenText.type = "hidden";
+                alert("Copied the link");
+            }
+        }
+    </script>
 </body>
 </html>

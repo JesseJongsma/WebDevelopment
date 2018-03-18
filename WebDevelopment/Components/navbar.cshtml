@@ -22,7 +22,7 @@
             @if (Session["LoggedIn"] != null && (bool)Session["LoggedIn"])
             {
                 <li class="nav-item">
-                    <a class="nav-link @(pageName == "/editProfile.cshtml" ? "active" : "")" href="~/editProfile.cshtml">Profile</a>
+                    <a class="nav-link @(pageName == "/boughtItems.cshtml" ? "active" : "")" href="~/boughtItems.cshtml">Bought items</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @(pageName == "/events.cshtml" ? "active" : "")" href="~/events.cshtml">Events</a>
