@@ -1,0 +1,6 @@
+﻿@{
+    if (Session["LoggedIn"] == null)
+    {
+        Response.Redirect("~/login.cshtml");
+    }
+}

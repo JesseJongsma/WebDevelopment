@@ -1,33 +1,30 @@
 ﻿@using WebMatrix.Data;
+@RenderPage("~/Components/LoggedIn.cshtml");
 @{
-    if (Session["LoggedIn"] == null)
-    {
-        Response.Redirect("~/login.cshtml");
-    }
-
-    string eventId, userId, wishlistId;
+    Auth auth = new Auth();
+    string eventId, wishlistId, userIdPost, username = Session["Username"].ToString();
+    int userId = auth.GetUserId(Session["Username"].ToString());
     dynamic joinBoughtWishlists = null;
-    CreateWishlist CW;
     int count = 0;
 
     if (IsPost && Validation.IsValid() && Request.Form["BuyBtn"] != null)
     {
         eventId = Request.Form["EventId"];
-        userId = Request.Form["UserId"];
+        userIdPost = Request.Form["UserId"];
         wishlistId = Request.Form["WishlistId"];
+        Events events = new Events(Convert.ToInt32(eventId), username);
 
-        CW = new CreateWishlist(Convert.ToInt32(eventId), Session["Username"].ToString());
-        if (CW.CheckEventForUser())
+        if (events.GetHost())
         {
             using (Database db = Database.Open("aSpecialDay"))
             {
                 var selectDuplicate = db.Query("SELECT * FROM Bought " +
-                    "WHERE LoginId = @0 AND WishlistId = @1", CW.GetUserId(), wishlistId);
+                    "WHERE LoginId = @0 AND WishlistId = @1", auth.GetUserId(username), wishlistId);
 
                 if (selectDuplicate.Count() == 0)
                 {
                     db.Execute("INSERT INTO Bought (LoginId, WishlistId) " +
-                        "VALUES (@0, @1) ", CW.GetUserId(), Convert.ToInt32(wishlistId));
+                        "VALUES (@0, @1) ", auth.GetUserId(username), Convert.ToInt32(wishlistId));
                 }
             }
         }
@@ -35,8 +32,7 @@
 
     if (IsPost && Validation.IsValid() && Request.Form["Remove"] != null)
     {
-        CW = new CreateWishlist(0, Session["Username"].ToString());
-        userId = CW.GetUserId().ToString();
+        userId = auth.GetUserId(Session["Username"].ToString());
         wishlistId = Request.Form["WishlistId"];
         using (Database db = Database.Open("aSpecialDay"))
         {
@@ -50,15 +46,15 @@
 
     using (Database db = Database.Open("aSpecialDay"))
     {
-        CW = new CreateWishlist(0, Session["Username"].ToString());
-        var selectBought = db.Query("SELECT WishlistId FROM Bought WHERE LoginId = @0", CW.GetUserId());
+        var selectBought = db.Query("SELECT WishlistId FROM Bought WHERE LoginId = @0", auth.GetUserId(Session["Username"].ToString()));
         joinBoughtWishlists = db.Query("" +
             "SELECT Bought.WishlistId, Wishlists.EventId, Wishlists.Name, Wishlists.Description, Wishlists.Link, Events.Name AS 'eventName' " +
             "FROM Bought " +
             "INNER JOIN Wishlists " +
             "ON Bought.WishlistId = Wishlists.Id " +
             "INNER JOIN Events " +
-            "ON Wishlists.EventId = Events.Id");
+            "ON Wishlists.EventId = Events.Id " +
+            "WHERE Bought.LoginId = @0", auth.GetUserId(username));
     }
 }
 

@@ -1,29 +1,31 @@
 ﻿@using WebMatrix.Data;
+@RenderPage("~/Components/LoggedIn.cshtml");
 @{
+    // Input boxes
+    string nameInput = null, descriptionInput = null, linkInput = null;
 
-    if (Session["LoggedIn"] == null)
+    // Declare Get variables
+    int wishlistId = 0, eventId = 0;
+    string name = null, description = null, link = null;
+
+    // Assign variables
+    try
     {
-        Response.Redirect("~/login.cshtml");
+        wishlistId = Convert.ToInt32(Request.Params["wishlistId"]);
+        eventId = Convert.ToInt32(Request.Params["EventId"]);
+        name = Request.Params["NameRow"];
+        description = Request.Params["DescriptionRow"];
+        link = Request.Params["LinkRow"];
+    }
+    catch (Exception e)
+    {
+        Validation.Add(e.ToString());
     }
 
-    int userId = 0;
-    int wishlistId = 0;
-    int eventId = 0;
-    string name = null;
-    string description = null;
-    string link = null;
-
-    string nameInput = null;
-    string descriptionInput = null;
-    string linkInput = null;
-
-    bool selectHost = false;
-
-    wishlistId = Convert.ToInt32(Request.Params["wishlistId"]);
-    eventId = Convert.ToInt32(Request.Params["EventId"]);
-    name = Request.Params["NameRow"];
-    description = Request.Params["DescriptionRow"];
-    link = Request.Params["LinkRow"];
+    // Declare class variables
+    Auth auth = new Auth();
+    Wishlists wishlists = new Wishlists();
+    Events events = new Events(eventId, Session["Username"].ToString());
 
     Validation.RequireField("name", "Name is a required field.");
 
@@ -33,29 +35,21 @@
         descriptionInput = Request.Form["description"];
         linkInput = Request.Form["link"];
 
-        CreateWishlist CW = new CreateWishlist(eventId, Session["Username"].ToString());
-        userId = CW.GetUserId();
-        Database db = Database.Open("aSpecialDay");
-        selectHost = db.QueryValue("SELECT Host FROM Guests WHERE UserId = @0 AND EventId = @1 AND Host = 1", userId, eventId);
+        int userId = auth.GetUserId(Session["Username"].ToString());
 
-        if (selectHost)
+        if (events.GetHost())
         {
-            db.Execute("UPDATE Wishlists SET Name = @0, Description = @1, Link = @2 WHERE Id = @3", nameInput, descriptionInput, linkInput, wishlistId);
+            wishlists.Updatewishlist(name, description, link, wishlistId);
             Response.Redirect("~/createWishlist.cshtml?EventId=" + eventId);
         }
-        db.Close();
     }
 
     if (IsPost && Validation.IsValid() && Request.Form["remove"] != null)
     {
-        CreateWishlist CW = new CreateWishlist(eventId, Session["Username"].ToString());
-        userId = CW.GetUserId();
-        Database db = Database.Open("aSpecialDay");
-        selectHost = db.QueryValue("SELECT Host FROM Guests WHERE UserId = @0 AND EventId = @1 AND Host = 1", userId, eventId);
 
-        if (selectHost)
+        if (events.GetHost())
         {
-            db.Execute("DELETE FROM Wishlists WHERE Id = @0", wishlistId);
+            wishlists.RemoveWishlist(wishlistId);
             Response.Redirect("~/createWishlist.cshtml?EventId=" + eventId);
         }
     }

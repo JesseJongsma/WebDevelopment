@@ -1,19 +1,12 @@
-﻿@using WebMatrix.Data;
+﻿@using WebMatrix.Data
+@RenderPage("~/Components/LoggedIn.cshtml")
 @{
+    //var selectWishlists = db.Query("SELECT * FROM Wishlists");
 
-    if (Session["LoggedIn"] == null)
-    {
-        Response.Redirect("~/login.cshtml");
-    }
+    Auth auth = new Auth();
 
-    Database db = Database.Open("aSpecialDay");
-    var selectWishlists = db.Query("SELECT * FROM Wishlists");
-
-    var selectLoginId = db.QueryValue("SELECT Id FROM Login WHERE Username = @0", Session["Username"]);
-    var selectEvents = db.Query("SELECT * " +
-        "FROM Guests " +
-        "FULL OUTER JOIN Events ON Events.Id = Guests.EventId " +
-        "WHERE UserId = @0", selectLoginId);
+    Events events = new Events(0, Session["Username"].ToString());
+    var selectEvents = events.GetAllMyEvents();
 
 
     string url = new Uri(HttpContext.Current.Request.Url.AbsoluteUri).OriginalString;
@@ -28,8 +21,8 @@
     {
         formattedUrl = url;
     }
+
     formattedUrl += "/invite.cshtml?Key=";
-    db.Close();
 }
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -55,7 +48,7 @@
             <tbody>
 
                 @{
-                    int count = -1;
+                    int count = 0;
                     foreach (var row in selectEvents)
                     {
 

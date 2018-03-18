@@ -1,37 +1,25 @@
-﻿@using WebMatrix.Data;
-@{
+﻿@{
+    // Use validations so that the user can't insert empty fields
     Validation.RequireField("username", "Username is required.");
-    Validation.RequireField("name", "Name is required.");
     Validation.RequireField("passwordFirst", "First password input is required.");
     Validation.Add("passwordSecond", Validator.EqualsTo("passwordFirst", "Passwords do not match"));
 
     string username = Request.Form["username"];
-    string name = Request.Form["name"];
     string passwordFirst = Request.Form["passwordFirst"];
     string passwordSecond = Request.Form["passwordSecond"];
 
     if (IsPost && Validation.IsValid())
     {
-        var db = Database.Open("aSpecialDay");
-        var encrypted = SHAEncrypt.GenerateSHA512String(passwordFirst);
-        var insertQuery = "INSERT INTO Login (Username, Password) " +
-                    "VALUES (@0, @1)";
-        var selectQuery = db.QueryValue("SELECT Username FROM Login WHERE Username  = @0", username);
-
-        if (selectQuery != null)
+        // Hash password and insert data
+        Auth auth = new Auth();
+        if (auth.Register(username, passwordFirst) == 0)
         {
-            Validation.Add("username", Validator.EqualsTo(selectQuery, "Username already exists."));
+            Validation.Add("Username already exists.");
         }
         else
         {
-            db.Execute(insertQuery, username, encrypted);
-            Response.Redirect("~/index.cshtml");
+            Response.Redirect("~/login.cshtml");
         }
-    }
-
-    if (Session["LoggedIn"] != null && (bool)Session["LoggedIn"])
-    {
-        Response.Redirect("~/index.cshtml");
     }
 
 }
@@ -55,9 +43,6 @@
 
                 <div class="form-group">
                     <input class="form-control" type="text" name="username" placeholder="Enter your Username" required />
-                </div>
-                <div class="form-group">
-                    <input class="form-control" type="text" name="name" id="InputName" placeholder="Enter your name" required />
                 </div>
                 <div class="form-group">
                     <input class="form-control" type="password" name="passwordFirst" id="InputPasswordFirst" placeholder="Your new password" required />

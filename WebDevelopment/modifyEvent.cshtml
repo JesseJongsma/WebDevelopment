@@ -1,68 +1,98 @@
-﻿@using WebMatrix.Data;
+﻿@RenderPage("~/Components/LoggedIn.cshtml");
 @{
-    if (Session["LoggedIn"] == null)
-    {
-        Response.Redirect("~/login.cshtml");
-    }
-
     int eventId = 0;
-    CreateWishlist CW = new CreateWishlist(0, Session["Username"].ToString());
+    Events events;
+    Auth auth = new Auth();
     dynamic result = null;
-    if (Request.Params["EventId"] != null)
+    string name, date, time, description, location;
+    var parsedDate = "";
+    string[] dateTimeSplitted = new string[2];
+
+    Validation.RequireFields("name", "date", "time", "location");
+
+    if (Request.Params["EventId"] != null && int.TryParse(Request.Params["EventId"], out eventId))
     {
-        if (int.TryParse(Request.Params["EventId"], out eventId))
+        events = new Events(eventId, Session["Username"].ToString());
+
+        // if the submit button has been pressed
+        if (IsPost && Request.Form["Submit"] != null)
         {
-            using (Database db = Database.Open("aSpecialDay"))
+            name = Request.Form["name"];
+            date = Request.Form["date"];
+            time = Request.Form["time"];
+            description = Request.Form["description"];
+            location = Request.Form["location"];
+
+            string newDate = DateTime.Parse(date).ToString("dd/MM/yyyy");
+            string newDatetime = newDate + " " + time;
+
+            if (events.GetHost())
             {
-                bool checkAuth = db.QueryValue("SELECT host FROM Guests WHERE UserId = @0 AND EventId = @1", CW.GetUserId(), eventId);
-                if (checkAuth)
-                {
-                    result = db.QuerySingle("SELECT * FROM Events WHERE Id = @0", eventId);
-                }
+                events.UpdateEvent(name, newDatetime, description, location);
+                Response.Redirect("~/events.cshtml");
             }
         }
+
+        // if the remove button has been pressed
+        if (IsPost && Request.Form["Remove"] != null)
+        {
+            if (events.GetHost())
+            {
+                events.RemoveEvent();
+                Response.Redirect("~/events.cshtml");
+            }
+        }
+
+        // Load the event
+        if (events.GetHost())
+        {
+            result = events.GetEventById(eventId);
+            string dateTime = result.DateTime.ToString();
+            dateTimeSplitted = dateTime.Split(' ');
+            var parseDate = DateTime.Parse(dateTimeSplitted[0]);
+            parsedDate = parseDate.ToString("yyyy-MM-dd");
+        }
     }
-    string dateTime = result.DateTime.ToString();
-    string[] dateTimeSplitted = dateTime.Split(' ');
-    var parseDate = DateTime.Parse(dateTimeSplitted[0]);
-    var parsedDate = parseDate.ToString("yyyy-MM-dd");
 }
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    @RenderPage("~/Components/head.cshtml");
+    @RenderPage("~/Components/head.cshtml")
 </head>
 <body>
-    @RenderPage("~/Components/navbar.cshtml");
+    @RenderPage("~/Components/navbar.cshtml")
 
-    <div class="container d-flex h-100 justify-content-center">
-        <div class="row h-100 justify-content-center align-items-center">
-            <form class="col-md-12" action="" method="post">
-                @if (IsPost && !Validation.IsValid())
+    @if (result != null)
     {
-            <div class="alert alert-danger">
-                @Html.ValidationSummary("Errors:", false)
+        <div class="container d-flex h-100 justify-content-center">
+            <div class="row h-100 justify-content-center align-items-center">
+                <form class="col-md-12" action="" method="post">
+                    @if (IsPost && !Validation.IsValid())
+                    {
+                        <div class="alert alert-danger">
+                            @Html.ValidationSummary("Errors:", false)
+                        </div>
+                    }
+                    <h1>Create Event.</h1>
+                    <div class="form-group">
+                        <input class="form-control" type="text" name="name" placeholder="Enter your event name." value="@result.Name" required />
+                    </div>
+                    <div class="form-group">
+                        <input class="form-control col" type="date" name="date" placeholder="Enter the date of the event." value="@parsedDate" required />
+                    </div>
+                    <div class="form-group">
+                        <input class="form-control col" type="time" name="time" placeholder="Enter the time of the event." value="@dateTimeSplitted[1]" required />
+                    </div>
+                    <div class="form-group">
+                        <textarea class="form-control" name="description" placeholder="Enter a description of your event.">@result.Description</textarea>
+                    </div>
+                    <div class="form-group">
+                        <input class="form-control" type="text" name="location" placeholder="Enter the location of your event" value="@result.Location" required />
+                    </div>
+                    <input class="btn btn-primary btn-block" type="submit" name="Submit" value="Submit">
+                    <input class="btn btn-danger btn-block" type="submit" name="Remove" value="Remove">
+                </form>
             </div>
-}
-                <h1>Create Event.</h1>
-                <div class="form-group">
-                    <input class="form-control" type="text" name="name" placeholder="Enter your event name." value="@result.Name" required />
-                </div>
-                <div class="form-group">
-                    <input class="form-control col" type="date" name="date" placeholder="Enter the date of the event." value="@parsedDate" required />
-                </div>
-                <div class="form-group">
-                    <input class="form-control col" type="time" name="time" placeholder="Enter the time of the event." value="@dateTimeSplitted[1]" required />
-                </div>
-                <div class="form-group">
-                    <textarea class="form-control" name="description" placeholder="Enter a description of your event.">@result.Description</textarea>
-                </div>
-                <div class="form-group">
-                    <input class="form-control" type="text" name="location" placeholder="Enter the location of your event" value="@result.Location" required />
-                </div>
-                <input class="btn btn-primary btn-block" type="submit" name="submit" value="submit">
-                <input class="btn btn-primary btn-block" type="submit" name="submit" value="submit">
-            </form>
         </div>
-    </div>
+    }
 </body>
 </html>

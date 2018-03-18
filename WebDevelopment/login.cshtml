@@ -1,29 +1,15 @@
-﻿@using System.Security.Cryptography;
-@using System.Text;
-@using WebMatrix.Data;
-@{
-    Database db = Database.Open("aSpecialDay");
-    IEnumerable<dynamic> data = null;
+﻿@{
     string error = null;
     string keyCookieValue = null;
-    if (Request.Cookies["key"] != null)
-    {
-        HttpCookie keyCookie = Request.Cookies["key"];
-        keyCookieValue = keyCookie.Value;
-    }
+    Auth auth = new Auth();
 
+    // When the user has filled in the login form
     if (IsPost)
     {
-
-        var SHAEncrypt = new SHAEncrypt();
-
         string username = Request.Form["username"];
         string password = Request.Form["password"];
-        var encrypted = SHAEncrypt.GenerateSHA512String(password);
 
-        data = db.Query("SELECT * FROM Login WHERE Username = @0 AND Password = @1", username, encrypted);
-
-        if (data.Count() > 0)
+        if (auth.Login(username, password) > 0)
         {
             Session["LoggedIn"] = true;
             Session["Username"] = username;
@@ -34,19 +20,26 @@
         }
     }
 
-    if (Session["LoggedIn"] != null && (bool)Session["LoggedIn"])
+    // Check if the user has logged in and if the cookie isset
+    if (Session["LoggedIn"] != null && (bool)Session["LoggedIn"] )
     {
-        if (keyCookieValue != null)
+        if (Request.Cookies["key"] != null)
         {
-            CreateWishlist wishlist = new CreateWishlist(0, Session["Username"].ToString());
-            int userId = wishlist.GetUserId();
-            int eventId = db.QueryValue("SELECT Id FROM Events WHERE SecretKey = @0", keyCookieValue);
-            db.Execute("INSERT INTO Guests (UserId, EventId, Host) VALUES (@0, @1, @2)", userId, eventId, 0);
+            HttpCookie keyCookie = Request.Cookies["key"];
+            keyCookieValue = keyCookie.Value;
+
+            if (auth.InsertGuest(Session["Username"].ToString(), keyCookieValue) > 0)
+            {
+                // remove the cookie once it has been used
+                HttpCookie keyRemove = HttpContext.Current.Request.Cookies["key"];
+                HttpContext.Current.Response.Cookies.Remove("key");
+                keyRemove.Expires = DateTime.Now.AddDays(-10);
+                keyRemove.Value = null;
+                HttpContext.Current.Response.SetCookie(keyRemove);
+            }
         }
         Response.Redirect("~/index.cshtml");
     }
-
-    db.Close();
 }
 <!DOCTYPE html>
 <html class="h-100" xmlns="http://www.w3.org/1999/xhtml">
@@ -55,7 +48,6 @@
 </head>
 <body class="h-100">
     @RenderPage("~/Components/navbar.cshtml")
-    <h1>@keyCookieValue</h1>
     <div class="container d-flex h-100 justify-content-center">
         <div class="row h-100 justify-content-center align-items-center">
             <form class="col-md-12" action="" method="post">
@@ -69,7 +61,7 @@
 
                 <h1>Log in.</h1>
                 <div class="form-group">
-                    <input class="form-control" type="text" name="username" id="InputUsername" placeholder="Username" />
+                    <input class="form-control" type="text" name="username" id="InputUsername" placeholder="Username"/>
                 </div>
                 <div class="form-group">
                     <input class="form-control" type="password" name="password" id="InputPassword" placeholder="Password" />

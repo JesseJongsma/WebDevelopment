@@ -1,38 +1,27 @@
 ﻿@using WebMatrix.Data;
+@RenderPage("~/Components/LoggedIn.cshtml");
 @{
-    if (Session["LoggedIn"] == null)
-    {
-        Response.Redirect("~/login.cshtml");
-    }
-
+    // Add validation
     Validation.RequireField("name", "Username is required.");
     Validation.RequireField("date", "Date is required");
     Validation.RequireField("time", "Time is required");
     Validation.RequireField("location", "location is required");
 
-    string name = Request.Form["name"];
-    string date = Request.Form["date"];
-    string time = Request.Form["time"];
-    string description = Request.Form["description"];
-    string location = Request.Form["location"];
-
-    string dateTime = date +" "+ time;
+    Auth auth = new Auth();
+    Events events = new Events(0, Session["Username"].ToString());
 
     if (IsPost && Validation.IsValid())
     {
-        SHAEncrypt encrypt = new SHAEncrypt();
-        string key = encrypt.RandomKey();
+        // Retrive post data
+        string name = Request.Form["name"];
+        string dateTime = Request.Form["date"] + " " + Request.Form["time"];
+        string description = Request.Form["description"];
+        string location = Request.Form["location"];
 
-        Database db = Database.Open("aSpecialDay");
-        var selectCurrentUser = db.QueryValue("SELECT id FROM Login WHERE Username = @0", Session["Username"]);
-
-        var insertToEvents = db.Execute("INSERT INTO Events (Name, DateTime, Description, Location, SecretKey) " +
-            "VALUES (@0, @1, @2, @3, @4)", name, dateTime, description, location, key);
-
-        var selectLastAddedRow = db.QueryValue("SELECT TOP 1 Id FROM Events ORDER BY Id DESC");
-
-        var insertToGuests = db.Execute("INSERT INTO Guests (UserId, EventId, Host) VALUES (@0, @1, @2)", selectCurrentUser, selectLastAddedRow, 1);
-
+        if (events.CreateEvent(name, dateTime, description, location) > 0)
+        {
+            Response.Redirect("~/events.cshtml");
+        }
     }
 }
 <html xmlns="http://www.w3.org/1999/xhtml">

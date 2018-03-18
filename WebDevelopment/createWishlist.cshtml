@@ -1,12 +1,10 @@
-﻿@{
-    if (Session["LoggedIn"] == null)
-    {
-        Response.Redirect("~/login.cshtml");
-    }
+﻿@RenderPage("~/Components/LoggedIn.cshtml");
+@{
+    Events events = null;
+    Wishlists wishlists = null; 
+    Auth auth = new Auth();
 
-    CreateWishlist createWishlist = null;
     IEnumerable<dynamic> wishlist = null;
-    bool checkEvent = false;
     bool host = false;
     string title = null;
     int count = 0;
@@ -19,7 +17,8 @@
     }
     else
     {
-        createWishlist = new CreateWishlist(eventId, Session["Username"].ToString());
+        wishlists = new Wishlists(eventId, Session["Username"].ToString());
+        events = new Events(eventId, Session["Username"].ToString());
     }
 
     Validation.RequireFields("name", "description");
@@ -29,24 +28,20 @@
         string name = Request.Form["name"];
         string description = Request.Form["description"];
         string link = Request.Form["link"];
-        createWishlist.InsertData(name, description, link);
+        wishlists.InsertWishlist(name, description, link);
     }
 
-    if (createWishlist != null)
+    // Show content if the user is a guest or a host
+    if (events.GetGuest() != null)
     {
-        checkEvent = createWishlist.CheckEventForUser();
+        title = events.GetTitle();
+        host = events.GetHost();
+        wishlist = wishlists.GetWishlist();
     }
 
-    if (checkEvent)
+    if (events.GetHost())
     {
-        title = createWishlist.GetTitle();
-        host = createWishlist.GetHost();
-        wishlist = createWishlist.GetWishlist();
-    }
-
-    if (host)
-    {
-        userId = createWishlist.GetUserId();
+        userId = auth.GetUserId(Session["username"].ToString());
     }
 }
 <!DOCTYPE html>
@@ -114,7 +109,7 @@
                                         <input type="hidden" name="EventId" value="@row.EventId" />
                                         <input type="hidden" name="UserId" value="@userId" />
                                         <input type="hidden" name="WishlistId" value="@row.Id" />
-                                        @if (createWishlist.CheckBought(row.Id))
+                                        @if (wishlists.CheckBought(row.Id))
                                         {
                                             <input class="btn btn-block btn-primary disabled" value="Bought" />
                                         }
@@ -130,7 +125,7 @@
                         count++;
                     }
 
-                    @if (Request.Params["EventId"] != null && createWishlist.CheckEventForUser())
+                    @if (Request.Params["EventId"] != null && events.GetHost())
                     {
                         <tr>
                             <form action="" method="post">
