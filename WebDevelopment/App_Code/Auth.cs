@@ -12,6 +12,12 @@ public class Auth
     private Database db;
     private Events events;
 
+    /// <summary>
+    /// Register a new user to the website
+    /// </summary>
+    /// <param name="username"></param>
+    /// <param name="password"></param>
+    /// <returns></returns>
     public int Register(string username, string password)
     {
         password = SHAEncrypt.GenerateSHA512String(password);

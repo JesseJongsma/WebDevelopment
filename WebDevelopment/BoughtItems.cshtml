@@ -1,7 +1,7 @@
-﻿@using WebMatrix.Data;
-@RenderPage("~/Components/LoggedIn.cshtml");
+﻿@RenderPage("~/Components/LoggedIn.cshtml");
 @{
     Auth auth = new Auth();
+    Wishlists wishlists = new Wishlists(0, Session["Username"].ToString());
     string eventId, wishlistId, userIdPost, username = Session["Username"].ToString();
     int userId = auth.GetUserId(Session["Username"].ToString());
     dynamic joinBoughtWishlists = null;
@@ -13,20 +13,14 @@
         userIdPost = Request.Form["UserId"];
         wishlistId = Request.Form["WishlistId"];
         Events events = new Events(Convert.ToInt32(eventId), username);
+        wishlists = new Wishlists(Convert.ToInt32(eventId), Session["Username"].ToString());
 
-        if (events.GetHost())
+        if (events.GetGuest() != null)
         {
-            using (Database db = Database.Open("aSpecialDay"))
-            {
-                var selectDuplicate = db.Query("SELECT * FROM Bought " +
-                    "WHERE LoginId = @0 AND WishlistId = @1", auth.GetUserId(username), wishlistId);
+            //var selectDuplicate = db.Query("SELECT * FROM Bought " +
+            //    "WHERE LoginId = @0 AND WishlistId = @1", auth.GetUserId(username), wishlistId);
 
-                if (selectDuplicate.Count() == 0)
-                {
-                    db.Execute("INSERT INTO Bought (LoginId, WishlistId) " +
-                        "VALUES (@0, @1) ", auth.GetUserId(username), Convert.ToInt32(wishlistId));
-                }
-            }
+            wishlists.BuyItem(Convert.ToInt32(wishlistId));
         }
     }
 
@@ -34,28 +28,12 @@
     {
         userId = auth.GetUserId(Session["Username"].ToString());
         wishlistId = Request.Form["WishlistId"];
-        using (Database db = Database.Open("aSpecialDay"))
-        {
-            var selectBought = db.Query("SELECT WishlistId FROM Bought WHERE LoginId = @0", userId);
-            if (selectBought != null)
-            {
-                db.Execute("DELETE FROM Bought WHERE LoginId = @0 AND WishlistId = @1", userId, wishlistId);
-            }
-        }
+
+        wishlists.ReturnItem(Convert.ToInt32(wishlistId));
     }
 
-    using (Database db = Database.Open("aSpecialDay"))
-    {
-        var selectBought = db.Query("SELECT WishlistId FROM Bought WHERE LoginId = @0", auth.GetUserId(Session["Username"].ToString()));
-        joinBoughtWishlists = db.Query("" +
-            "SELECT Bought.WishlistId, Wishlists.EventId, Wishlists.Name, Wishlists.Description, Wishlists.Link, Events.Name AS 'eventName' " +
-            "FROM Bought " +
-            "INNER JOIN Wishlists " +
-            "ON Bought.WishlistId = Wishlists.Id " +
-            "INNER JOIN Events " +
-            "ON Wishlists.EventId = Events.Id " +
-            "WHERE Bought.LoginId = @0", auth.GetUserId(username));
-    }
+    joinBoughtWishlists = wishlists.GetBoughtList();
+
 }
 
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -99,8 +77,7 @@
         </table>
     </div>
     <script type="text/javascript">
-        function validate(index)
-        {
+        function validate(index) {
             var removeBtn = document.getElementsByName("Remove")[index];
             if (removeBtn.value == "Are you sure?") {
                 removeBtn.setAttribute("type", "submit");

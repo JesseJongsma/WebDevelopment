@@ -103,4 +103,62 @@ public class Wishlists
         }
         return false;
     }
+
+    /// <summary>
+    /// Let a user buy an item
+    /// </summary>
+    /// <param name="wishlistId"></param>
+    /// <returns></returns>
+    public int BuyItem(int wishlistId)
+    {
+        using (db = Database.Open("aSpecialDay"))
+        {
+            return db.Execute("INSERT INTO Bought (LoginId, WishlistId) " +
+                        "SELECT @0, @1 " +
+                        "WHERE NOT EXISTS(" +
+                        "SELECT * FROM Bought WHERE LoginId = @0 AND WishlistId = @1) ", auth.GetUserId(_Username), Convert.ToInt32(wishlistId));
+        }
+    }
+
+    /// <summary>
+    /// Return the item back from bought state
+    /// </summary>
+    /// <param name="wishlistId"></param>
+    /// <returns></returns>
+    public int ReturnItem(int wishlistId)
+    {
+        using (db = Database.Open("aSpecialDay"))
+        {
+            var selectBought = db.Query("SELECT WishlistId FROM Bought WHERE LoginId = @0", auth.GetUserId(_Username));
+            if (selectBought != null)
+            {
+                return db.Execute("DELETE FROM Bought WHERE LoginId = @0 AND WishlistId = @1", auth.GetUserId(_Username), wishlistId);
+            }
+        }
+        return 0;
+    }
+
+    /// <summary>
+    /// Load the boughtlist
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerable<dynamic> GetBoughtList()
+    {
+        using (db = Database.Open("aSpecialDay"))
+        {
+            var selectBought = db.Query("SELECT WishlistId FROM Bought WHERE LoginId = @0", auth.GetUserId(_Username));
+            if (selectBought != null)
+            {
+                return db.Query("" +
+                    "SELECT Bought.WishlistId, Wishlists.EventId, Wishlists.Name, Wishlists.Description, Wishlists.Link, Events.Name AS 'eventName' " +
+                    "FROM Bought " +
+                    "INNER JOIN Wishlists " +
+                    "ON Bought.WishlistId = Wishlists.Id " +
+                    "INNER JOIN Events " +
+                    "ON Wishlists.EventId = Events.Id " +
+                    "WHERE Bought.LoginId = @0", auth.GetUserId(_Username));
+            }
+            return null;
+        }
+    }
 }
